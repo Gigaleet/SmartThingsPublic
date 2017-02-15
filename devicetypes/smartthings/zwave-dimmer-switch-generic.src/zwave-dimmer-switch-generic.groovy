@@ -20,10 +20,17 @@ metadata {
 		capability "Polling"
 		capability "Refresh"
 		capability "Sensor"
+		capability "Light"
 
 		fingerprint inClusters: "0x26", deviceJoinName: "Z-Wave Dimmer"
 		fingerprint mfr:"001D", prod:"1902", deviceJoinName: "Z-Wave Dimmer"
 		fingerprint mfr:"001D", prod:"1B03", model:"0334", deviceJoinName: "Leviton Universal Dimmer"
+		fingerprint mfr:"011A", prod:"0102", model:"0201", deviceJoinName: "Enerwave In-Wall Dimmer"
+		fingerprint mfr:"001D", prod:"1001", model:"0334", deviceJoinName: "Leviton 3-Speed Fan Controller"
+		fingerprint mfr:"001D", prod:"0602", model:"0334", deviceJoinName: "Leviton Magnetic Low Voltage Dimmer"
+		fingerprint mfr:"001D", prod:"0401", model:"0334", deviceJoinName: "Leviton 600W Incandescent Dimmer"
+		fingerprint mfr:"0111", prod:"8200", model:"0200", deviceJoinName: "Remotec Technology Plug-In Dimmer"
+		fingerprint mfr:"1104", prod:"001D", model:"0501", deviceJoinName: "Leviton 1000W Incandescant Dimmer"
 	}
 
 	simulator {
