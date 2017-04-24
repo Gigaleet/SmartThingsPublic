@@ -11,7 +11,7 @@
 */ 
 
 def clientVersion() {
-    return "05.05.00"
+    return "05.05.01"
 }
 
 /**
@@ -21,6 +21,7 @@ def clientVersion() {
 * Redistribution of any changes or code is not allowed without permission
 *
 * Change Log:
+* 2017-4-19 - (v05.05.01) Patch for reporting Master Codes
 * 2017-4-11 - (v05.05.00) Added ability to select Chimes for when doors are opened and closed, improved user interface/text, added user presence based notifications
 * 2017-4-11 - (v05.04.01) Fixed grammar for messages
 * 2017-1-25 - (v5.4.0) Added ability to run lock/unlock actions on when the specified users aren't present or not in specific modes, also less verbose messages unless detailed notifications are enabled while running lock and unlock actions
@@ -1029,7 +1030,7 @@ def lockHandler(evt) {
                 }
             }
             
-            if (evt.data) { // Was it locked using a code
+            if (evt.data) { // Was it unlocked using a code
                 data = new JsonSlurper().parseText(evt.data)
             }
             def lockMode = data?.type ?: (evt.descriptionText?.contains("manually") ? "manually" : "electronically")
@@ -1059,7 +1060,7 @@ def lockHandler(evt) {
                     break
             }
             
-            if (!(data?.usedCode) && !(lockMode?.contains("keypad") || lockMode?.contains("rfid"))) { // No extended data, must be a manual/auto/keyed unlock (don't run actions on manual lock/auto/unlock as it would run everything the knob/button is pressed from inside the house), some locks don't send keypad user codes
+            if ((data?.usedCode == null) && !(lockMode?.contains("keypad") || lockMode?.contains("rfid"))) { // No extended data, must be a manual/auto/keyed unlock (don't run actions on manual lock/auto/unlock as it would run everything the knob/button is pressed from inside the house), some locks don't send keypad user codes
                 log.debug "$evt.displayName was unlocked manually. Source type: $lockMode"
 
                 if ((!settings."individualDoorActions" && manualNotify && (manualNotifyModes ? manualNotifyModes.find{it == location.mode} : true)) ||
@@ -1246,23 +1247,29 @@ def lockHandler(evt) {
                     break
             }
             
-            if (lockMode?.contains("keypad") || lockMode?.contains("rfid") || data?.usedCode) { // LOCKED VIA KEYPAD/RFID (keep compatibility for stock ST handler when lock codes are integrated)
+            if (lockMode?.contains("keypad") || lockMode?.contains("rfid") || (data?.usedCode != null)) { // LOCKED VIA KEYPAD/RFID (keep compatibility for stock ST handler when lock codes are integrated)
                 def user = ""
                 def userName, notify, notifyModes, notifyXPresence, extLockNotify, extLockNotifyModes, userOverrideActions
 
-                if (data?.usedCode) {
+                if (data?.usedCode >= 0) {
                     Integer i = data.usedCode as Integer
-                    user = i as String
-                    userName = settings."userNames${i}"
-                    notify = settings."userNotify${i}"
-                    notifyModes = settings."userNotifyModes${i}"
-                    notifyXPresence = settings."userXNotifyPresence${i}"
-                    userOverrideActions = settings."userOverrideUnlockActions${i}"
 
-                    // Check if we have user override lock actions defined
-                    if (!settings."userOverrideUnlockActions${i}") {
-                        log.trace "No user $userName specific lock action found, falling back to global actions"
-                        user = "" // We don't have a user specific action defined, fall back to global actions
+                    if (i == 0) {
+                        userName = "Master Code" // Special case locks like Yale have a master code which isn't programmable and is code 0
+                        notify = true // always inform about master users
+                    } else {
+                        user = i as String
+                        userName = settings."userNames${i}"
+                        notify = settings."userNotify${i}"
+                        notifyModes = settings."userNotifyModes${i}"
+                        notifyXPresence = settings."userXNotifyPresence${i}"
+                        userOverrideActions = settings."userOverrideUnlockActions${i}"
+
+                        // Check if we have user override lock actions defined
+                        if (!settings."userOverrideUnlockActions${i}") {
+                            log.trace "No user $userName specific lock action found, falling back to global actions"
+                            user = "" // We don't have a user specific action defined, fall back to global actions
+                        }
                     }
                 } else {
                     log.trace "No usercode found in extended data for external user lock"
