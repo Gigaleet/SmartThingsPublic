@@ -11,7 +11,7 @@
  */ 
  
 def clientVersion() {
-    return "03.02.02"
+    return "03.03.00"
 }
 
 /*
@@ -20,6 +20,7 @@ def clientVersion() {
  * Works with all Z-Wave Locks including Schlage, Yale, Kiwkset, Monoprice, DanaLock and IDLock
  *
  * Change Log
+ * 2017-4-19 - (v.03.02.03) Added more Yale fingerprints for Yale Assure Lock and patch for Yale Master Code reporting (code 0 and code 251)
  * 2017-3-13 - (v.3.2.2) Don't show unknown and reset states in the recently logs of device
  * 2017-2-25 - (v3.2.2) Added fingerprints and identification for Yale Conexis L1
  * 2017-2-3 - (v3.2.1) Fix for IDE some users were facing while installing the device handler
@@ -185,11 +186,12 @@ metadata {
         fingerprint type:"4003", cc:"72,86,98", mfr:"0109", prod:"0001", model:"0000", deviceJoinName:"Yale Real Living Push Button Lever Lock"
         fingerprint type:"4003", cc:"72,86,98", mfr:"0129", prod:"0001", model:"0000", deviceJoinName:"Yale Real Living Push Button Lever Lock"
         fingerprint type:"4003", cc:"72,86,98", mfr:"0109", prod:"0004", model:"0000", deviceJoinName:"Yale Real Living Push Button Deadbolt"
-        fingerprint type:"4003", cc:"72,86,98", mfr:"0129", prod:"0004", model:"0000", deviceJoinName:"Yale Real Living Push Button Deadbolt"
+        fingerprint type:"4003", cc:"72,86,98", mfr:"0129", prod:"0004", model:"0000", deviceJoinName:"Yale Real Living Push Button Deadbolt" // YRD 210
         fingerprint type:"4003", cc:"72,86,98", mfr:"0109", prod:"0004", model:"0800", deviceJoinName:"Yale YRD110"
         fingerprint type:"4003", cc:"72,86,98", mfr:"0129", prod:"0004", model:"0800", deviceJoinName:"Yale YRD110"
         fingerprint type:"4003", cc:"72,86,98", mfr:"0109", prod:"0002", model:"0800", deviceJoinName:"Yale YRD120"
         fingerprint type:"4003", cc:"72,86,98", mfr:"0129", prod:"0002", model:"0800", deviceJoinName:"Yale YRD120"
+        fingerprint type:"4003", cc:"5E,72,98,5A,73,86", mfr:"0129", prod:"8002", model:"1600", deviceJoinName:"Yale Assure with Bluetooth (YRD446-NR-605)"
         fingerprint type:"4003", cc:"72,86,98", mfr:"0129", prod:"0006", model:"0000", deviceJoinName:"Yale Keyfree Connected/Conexis L1" // UK
         fingerprint type:"4003", cc:"72,86,98", mfr:"0129", prod:"0007", model:"0000", deviceJoinName:"Yale Keyless Connected YD-01" // UK
         fingerprint type:"4003", cc:"72,86,98", mfr:"0129", prod:"0040", model:"0000", deviceJoinName:"Yale YDM3168" // Italy
@@ -398,6 +400,10 @@ private identifyLockModel() {
         case ~/0129-8001-.*/: // Yale nextTouch Wireless Touchscreen
             log.debug "Found Yale nexTouch"
             break
+            
+        case ~/0129-8002-.*/: // Yale Assure Lock
+            log.debug "Found Yale Assure"
+            break
                         
         case "0090-0001-0642": // Kwikset 916
         	log.debug "Found Kwikset 916 Lock"
@@ -578,9 +584,9 @@ def zwaveEvent(physicalgraph.zwave.commands.alarmv2.AlarmReport cmd) {
             	break
 			case 5: // Locked via Keypad
                 if (cmd.alarmType == 18) { // Locked with keypad code (Yale), it doesn't follow Z-Wave specs and eventParameter contains unknown e.g.: [99, 3, 1, 1], locked from outside via keypad (Schlage BE469, alarmLevel=0 for no code lock and leave, alarmLevel=1 for with code)
-                    if (cmd.alarmLevel) {
+                    if (cmd.alarmLevel >= 0) {
                         map.descriptionText = "$device.displayName was locked with code $cmd.alarmLevel"
-                        map.data = [ usedCode: cmd.alarmLevel, type: "keypad" ]
+                        map.data = [ usedCode: (state.MSR?.startsWith("0129-") ? (cmd.alarmLevel > 249 ? 0 : cmd.alarmLevel) : cmd.alarmLevel), type: "keypad" ] // Yale locks master code returns 251 and specs allow code upto 0xF9
                     } else {
                         map.descriptionText = "$device.displayName was locked"
                         map.data = [ type: "keypad" ]
@@ -595,9 +601,9 @@ def zwaveEvent(physicalgraph.zwave.commands.alarmv2.AlarmReport cmd) {
 				break
 			case 6: // Unlocked via Keypad
                 if (cmd.alarmType == 19) { // Unlocked with keypad code (Yale), it doesn't follow Z-Wave specs and eventParameter contains unknown e.g.: [99, 3, 1, 1]
-                    if (cmd.alarmLevel) {
+                    if (cmd.alarmLevel >= 0) {
                         map.descriptionText = "$device.displayName was unlocked with code $cmd.alarmLevel"
-                        map.data = [ usedCode: cmd.alarmLevel, type: "keypad" ]
+                        map.data = [ usedCode: (state.MSR?.startsWith("0129-") ? (cmd.alarmLevel > 249 ? 0 : cmd.alarmLevel) : cmd.alarmLevel), type: "keypad" ] // Yale locks master code returns 251 and specs allow code upto 0xF9
                     } else {
                         map.descriptionText = "$device.displayName was unlocked"
                         map.data = [ type: "keypad" ]
@@ -734,9 +740,9 @@ def zwaveEvent(physicalgraph.zwave.commands.alarmv2.AlarmReport cmd) {
         	break
 		case 18: // Locked with keypad code (Yale)
 			map = [ name: "lock", value: "locked" ]
-			if (cmd.alarmLevel) {
+			if (cmd.alarmLevel >= 0) { // Yale Master Code is 0
 				map.descriptionText = "$device.displayName was locked with code $cmd.alarmLevel"
-				map.data = [ usedCode: cmd.alarmLevel, type: "keypad" ]
+				map.data = [ usedCode: (state.MSR?.startsWith("0129-") ? (cmd.alarmLevel > 249 ? 0 : cmd.alarmLevel) : cmd.alarmLevel), type: "keypad" ] // Yale locks master code returns 251 and specs allow code upto 0xF9
 			} else {
                 map.descriptionText = "$device.displayName was locked"
                 map.data = [ type: "keypad" ]
@@ -768,9 +774,9 @@ def zwaveEvent(physicalgraph.zwave.commands.alarmv2.AlarmReport cmd) {
             runIn(3, reLocked) // The bolt resecures after 3 seconds, send the locked event notification
 		case 19: // Yale unlocked using keypad
 			map = [ name: "lock", value: "unlocked" ]
-			if (cmd.alarmLevel) {
+			if (cmd.alarmLevel >= 0) { // Yale Master code is 0
 				map.descriptionText = "$device.displayName was unlocked with code $cmd.alarmLevel"
-				map.data = [ usedCode: cmd.alarmLevel, type: "keypad" ]
+				map.data = [ usedCode: (state.MSR?.startsWith("0129-") ? (cmd.alarmLevel > 249 ? 0 : cmd.alarmLevel) : cmd.alarmLevel), type: "keypad" ] // Yale locks master code returns 251 and specs allow code upto 0xF9
 			} else {
                 map.descriptionText = "$device.displayName was unlocked"
                 map.data = [ type: "keypad" ]
