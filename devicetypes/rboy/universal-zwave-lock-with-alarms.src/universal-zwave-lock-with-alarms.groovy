@@ -11,7 +11,7 @@
  */ 
  
 def clientVersion() {
-    return "03.03.00"
+    return "03.03.01"
 }
 
 /*
@@ -20,6 +20,7 @@ def clientVersion() {
  * Works with all Z-Wave Locks including Schlage, Yale, Kiwkset, Monoprice, DanaLock and IDLock
  *
  * Change Log
+ * 2017-5-4 - (v03.03.01) Updated color scheme to match ST UX recommendations
  * 2017-4-19 - (v.03.02.03) Added more Yale fingerprints for Yale Assure Lock and patch for Yale Master Code reporting (code 0 and code 251)
  * 2017-3-13 - (v.3.2.2) Don't show unknown and reset states in the recently logs of device
  * 2017-2-25 - (v3.2.2) Added fingerprints and identification for Yale Conexis L1
@@ -235,10 +236,10 @@ metadata {
     tiles(scale: 2) {
 		multiAttributeTile(name:"toggle", type: "generic", width: 6, height: 4){
 			tileAttribute ("device.lock", key: "PRIMARY_CONTROL") {
-                attributeState "locked", label:'locked', action:"lock.unlock", icon:"st.locks.lock.locked", backgroundColor:"#79b821", nextState:"unlocking"
-                attributeState "unlocked", label:'unlocked', action:"lock.lock", icon:"st.locks.lock.unlocked", backgroundColor:"#ea9900", nextState:"locking"
-                attributeState "unknown", label:"jammed", action:"lock.lock", icon:"st.locks.lock.unknown", backgroundColor:"#ff3333", nextState:"locking"
-                attributeState "locking", label:'locking', icon:"st.locks.lock.locked", backgroundColor:"#79b821"
+                attributeState "locked", label:'locked', action:"lock.unlock", icon:"st.locks.lock.locked", backgroundColor:"#00a0dc", nextState:"unlocking"
+                attributeState "unlocked", label:'unlocked', action:"lock.lock", icon:"st.locks.lock.unlocked", backgroundColor:"#ffffff", nextState:"locking"
+                attributeState "unknown", label:"jammed", action:"lock.lock", icon:"st.locks.lock.unknown", backgroundColor:"#e86d13", nextState:"locking"
+                attributeState "locking", label:'locking', icon:"st.locks.lock.locked", backgroundColor:"#00a0dc"
                 attributeState "unlocking", label:'unlocking', icon:"st.locks.lock.unlocked", backgroundColor:"#ffffff"
 			}
 			tileAttribute ("device.lockStatus", key: "SECONDARY_CONTROL") {
@@ -246,10 +247,10 @@ metadata {
             }
 		}
         standardTile("lock", "device.lock", inactiveLabel: false, decoration: "flat", width: 2, height: 2) {
-			state "default", label:'Lock', action:"lock.lock", icon:"st.locks.lock.locked", nextState:"locking"
+			state "default", label:'Lock', action:"lock.lock", icon:"st.locks.lock.locked"
 		}
 		standardTile("unlock", "device.lock", inactiveLabel: false, decoration: "flat", width: 2, height: 2) {
-			state "default", label:'Unlock', action:"lock.unlock", icon:"st.locks.lock.unlocked", nextState:"unlocking"
+			state "default", label:'Unlock', action:"lock.unlock", icon:"st.locks.lock.unlocked"
 		}
 		standardTile("alarm", "device.alarm", inactiveLabel: false, decoration: "flat", width: 2, height: 2) {
 			state "unknown", label:'', icon:"", nextState:"workingoff", backgroundColor:"#ffffff", defaultState: true
@@ -272,14 +273,14 @@ metadata {
 		standardTile("codeunlock", "device.codeunlock", inactiveLabel: false, decoration: "flat", width: 2, height: 2) {
 			state "unknown", label:'', icon:"", backgroundColor:"#ffffff", nextState:"working", defaultState: true
 			state "enabled", label:'Code Entry On', action:"disableKeypad", icon:"st.unknown.zwave.remote-controller", backgroundColor:"#ffffff", nextState:"working"
-			state "disabled", label:'Code Off', action:"enableKeypad", icon:"st.unknown.zwave.remote-controller", backgroundColor:"#fd5050", nextState:"working"
-			state "working", label:'...', icon:"st.unknown.zwave.remote-controller", backgroundColor:"#79b8ff"
+			state "disabled", label:'Code Off', action:"enableKeypad", icon:"st.unknown.zwave.remote-controller", backgroundColor:"#00a0dc", nextState:"working"
+			state "working", label:'...', icon:"st.unknown.zwave.remote-controller", backgroundColor:"#cccccc"
 		}
 		standardTile("autolock", "device.autolock", inactiveLabel: false, decoration: "flat", width: 2, height: 2) {
 			state "unknown", label:'', icon:"", backgroundColor:"#ffffff", nextState:"working", defaultState: true
-			state "enabled", label:'AutoLock', action:"disableAutolock", icon:"st.contact.contact.closed", backgroundColor:"#79b821", nextState:"working"
+			state "enabled", label:'AutoLock', action:"disableAutolock", icon:"st.contact.contact.closed", backgroundColor:"#00a0dc", nextState:"working"
 			state "disabled", label:'AutoLock Off', action:"enableAutolock", icon:"st.contact.contact.closed", nextState:"working"
-			state "working", label:'...', icon:"st.contact.contact.closed", backgroundColor:"#79b8ff"
+			state "working", label:'...', icon:"st.contact.contact.closed", backgroundColor:"#cccccc"
 		}
 		standardTile("beeper", "device.beeper", inactiveLabel: false, decoration: "flat", width: 2, height: 2) {
 			state "unknown", label:'', icon:"", backgroundColor:"#ffffff", nextState:"workingoff", defaultState: true
@@ -304,7 +305,7 @@ metadata {
 		}
 		standardTile("tamper", "device.tamper", decoration: "flat", width: 2, height: 2) {
 			state "unknown", label:'', icon:"", backgroundColor:"#ffffff", defaultState: true
-			state "detected", label:'TAMPER', backgroundColor:"#ff0000"
+			state "detected", label:'TAMPER', backgroundColor:"#e86d13"
 			state "clear", label:'', backgroundColor:"#ffffff"
 		}
 		standardTile("smoke", "device.smoke", decoration: "flat", width: 2, height: 2) {
@@ -314,8 +315,8 @@ metadata {
 		}
 		standardTile("contact", "device.contactX", decoration: "flat", width: 2, height: 2) {
 			state "unknown", label:'', icon:"", backgroundColor:"#ffffff", defaultState: true
-			state "open", label: 'OPEN', icon: "st.contact.contact.open", backgroundColor: "#ffa81e"
-			state "closed", label: 'CLOSED', icon: "st.contact.contact.closed", backgroundColor: "#79b821"
+			state "open", label: 'OPEN', icon: "st.contact.contact.open", backgroundColor: "#e86d13"
+			state "closed", label: 'CLOSED', icon: "st.contact.contact.closed", backgroundColor: "#00a0dc"
 		}
 
 		main "toggle"
