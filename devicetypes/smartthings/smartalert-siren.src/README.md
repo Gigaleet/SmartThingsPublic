@@ -1,10 +1,10 @@
-# Z-wave Siren
+# Smartalert Siren
 
 Cloud Execution
 
-Works with: 
+Works with:
 
-* [FortrezZ Siren Strobe Alarm](https://www.smartthings.com/works-with-smartthings/other/fortrezz-water-valve)
+* [FortrezZ Siren Strobe Alarm](https://www.smartthings.com/products/fortrezz-siren-strobe-alarm)
 
 ## Table of contents
 
@@ -15,13 +15,10 @@ Works with:
 ## Capabilities
 
 * **Actuator** - represents that a Device has commands
-* **Alarm** - allows for interacting with devices that serve as alarms
-* **Battery** - defines device uses a battery
-* **Health Check** - indicates ability to get device health notifications
-* **Polling** - represents that poll() can be implemented for the device
-* **Refresh** - _refresh()_ command for status updates
-* **Sensor** - detects sensor events
 * **Switch** - can detect state (possible values: on/off)
+* **Sensor** - detects sensor events
+* **Alarm** - allows for interacting with devices that serve as alarms
+* **Health Check** - indicates ability to get device health notifications
 
 ## Device Health
 
