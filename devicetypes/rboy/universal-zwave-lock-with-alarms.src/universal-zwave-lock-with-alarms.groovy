@@ -11,7 +11,7 @@
  */ 
  
 def clientVersion() {
-    return "03.05.00"
+    return "03.05.01"
 }
 
 /*
@@ -19,6 +19,7 @@ def clientVersion() {
  * Works with all Z-Wave Locks including Schlage, Yale, Kiwkset, Monoprice, DanaLock and IDLock
  *
  * Change Log
+ * 2017-11-7 - (v03.05.01) Fixed audio on/off for Yale (it was inverted, on turned it off and vice verse)
  * 2017-10-19 - (v03.05.00) Added support for Danalock V3, added support for one touch locking/lock and leave tile
  * 2017-10-18 - (v03.04.03) Update tile layout with ST mobile app release 2.8.0
  * 2017-10-9 - (v03.04.02) August lock pro MSR patch, only supports secure commands
@@ -632,8 +633,8 @@ def zwaveEvent(physicalgraph.zwave.commands.alarmv2.AlarmReport cmd) {
 			case 5: // Locked via Keypad
                 if (cmd.alarmType == 18) { // Locked with keypad code (Yale), it doesn't follow Z-Wave specs and eventParameter contains unknown e.g.: [99, 3, 1, 1], locked from outside via keypad (Schlage BE469, alarmLevel=0 for no code lock and leave, alarmLevel=1 for with code)
                     if (cmd.alarmLevel >= 0) {
-                        map.descriptionText = "$device.displayName was locked with code $cmd.alarmLevel"
-                        map.data = [ usedCode: (state.MSR?.startsWith("0129-") ? (cmd.alarmLevel > 249 ? 0 : cmd.alarmLevel) : cmd.alarmLevel ?: null), type: "keypad" ] // Yale locks master code returns 251 and 0 and specs allow code upto 0xF9, Schlage/other locks report 0 for outside button/one touch lock
+                        map.descriptionText = "$device.displayName was locked with code ${(state.MSR?.startsWith("0129-") ? (cmd.alarmLevel > 249 ? 0 : cmd.alarmLevel) : cmd.alarmLevel ?: "")}"
+                        map.data = [ usedCode: (state.MSR?.startsWith("0129-") ? (cmd.alarmLevel > 249 ? 0 : cmd.alarmLevel) : cmd.alarmLevel ?: null), type: "keypad" ] // Yale locks master code returns 251 and 0 and specs allow code upto 0xF9, Schlage/other locks report 0 for outside button/one touch lock (don't use 0 as it's considered Master Code, report null for Schlage)
                     } else {
                         map.descriptionText = "$device.displayName was locked"
                         map.data = [ type: "keypad" ]
@@ -1638,12 +1639,12 @@ private yaleConfigurationReport(cmd) {
         	map = [name: "beeper", descriptionText: "Audio Mode"]
             switch (cmd.configurationValue[0]) {
             	case 1:
-            		map.value = "disabled"
+                case 2:
+            		map.value = "enabled"
                     break
                     
-                case 2:
                 case 3:
-                	map.value = "enabled"
+                	map.value = "disabled"
                     break
                     
                 default:
@@ -2214,7 +2215,7 @@ def enableAudio() {
         }
     } else if (state.MSR?.startsWith("0109-") || state.MSR?.startsWith("0129-")) { // Yale lock
         parameter = 1
-        value = [3]
+        value = [1]
     } else if (state.MSR?.startsWith("0090-0001")) { // Kwikset does not support setting remotely only reading
         log.trace "Kwikset lock does not support remotely enabling Audio, change settings on the lock"
         sendEvent(name: "invalidCommand", value: "Kwikset lock does not support remotely enabling Audio, change settings on the lock", isStateChange: true, displayed: true) // Report to dev with MSR
@@ -2250,7 +2251,7 @@ def disableAudio() {
         value = [0]
     } else if (state.MSR?.startsWith("0109-") || state.MSR?.startsWith("0129-")) { // Yale lock
         parameter = 1
-        value = [1]
+        value = [3]
     } else if (state.MSR?.startsWith("0090-0001")) { // Kwikset does not support setting remotely only reading
         log.trace "Kwikset lock does not support remotely disabling Audio, change settings on the lock"
         sendEvent(name: "invalidCommand", value: "Kwikset lock does not support remotely disabling Audio, change settings on the lock", isStateChange: true, displayed: true) // Report to dev with MSR
